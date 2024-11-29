@@ -3,4 +3,6 @@
 source 'https://rubygems.org'
 
 # Specify your gem's dependencies in libreconv.gemspec
+gem 'mixlib-shellout'
+
 gemspec

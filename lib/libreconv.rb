@@ -10,17 +10,19 @@ require 'open3'
 # Convert office documents using LibreOffice / OpenOffice to one of their supported formats.
 module Libreconv
   class ConversionFailedError < StandardError; end
+  class ConversionTimeoutError < StandardError; end
 
   # @param [String] source          Path or URL of the source file.
   # @param [String] target          Target file path.
+  # @param [Integer] timeout_secs   The maximum time this command is allowed to run.
   # @param [String] soffice_command Path to the soffice binary.
   # @param [String] convert_to      Format to convert to (default: 'pdf').
   # @raise [IOError]                If invalid source file/URL or soffice command not found.
   # @raise [URI::Error]             When URI parsing error.
   # @raise [Net::ProtocolError]     If source URL checking failed.
   # @raise [ConversionFailedError]  When soffice command execution error.
-  def self.convert(source, target, soffice_command = nil, convert_to = nil)
-    Converter.new(source, target, soffice_command, convert_to).convert
+  def self.convert(source, target, timeout_secs, soffice_command = nil, convert_to = nil)
+    Converter.new(source, target, timeout_secs, soffice_command, convert_to).convert
   end
 
   class Converter
@@ -29,14 +31,16 @@ module Libreconv
 
     # @param [String] source          Path or URL of the source file.
     # @param [String] target          Target file path.
+    # @param [Integer] timeout_secs   The maximum time this command is allowed to run.
     # @param [String] soffice_command Path to the soffice binary.
     # @param [String] convert_to      Format to convert to (default: 'pdf').
     # @raise [IOError]                If invalid source file/URL or soffice command not found.
     # @raise [URI::Error]             When URI parsing error.
     # @raise [Net::ProtocolError]     If source URL checking failed.
-    def initialize(source, target, soffice_command = nil, convert_to = nil)
+    def initialize(source, target, timeout_secs, soffice_command = nil, convert_to = nil)
       @source = check_source_type(source)
       @target = target
+      @timeout_secs = timeout_secs
       @soffice_command = soffice_command || which('soffice') || which('soffice.bin')
       @convert_to = convert_to || 'pdf'
 
@@ -63,19 +67,23 @@ module Libreconv
     # @param [String] target_path
     # @return [String]
     # @raise [ConversionFailedError]  When soffice command execution error.
+    # @raise [ConversionTimeoutError] When soffice does not execute within the given timeframe.
     def execute_command(command, target_path)
-      output, error, status =
-        if RUBY_PLATFORM =~ /java/
-          Open3.capture3(*command)
-        else
-          Open3.capture3(command_env, *command, unsetenv_others: true)
-        end
+      cmd = if RUBY_PLATFORM =~ /java/
+        Mixlib::ShellOut.new(*command, timeout: @timeout_secs)
+      else
+        Mixlib::ShellOut.new(*command, environment: command_env, timeout: @timeout_secs)
+      end
+
+      cmd.run_command
 
       target_tmp_file = File.join(target_path, target_filename)
-      return target_tmp_file if status.success? && File.exist?(target_tmp_file)
+      return target_tmp_file if !cmd.error? && File.exist?(target_tmp_file)
 
       raise ConversionFailedError,
-            "Conversion failed! Output: #{output.strip.inspect}, Error: #{error.strip.inspect}"
+        "Conversion failed! Output: #{cmd.stdout.strip.inspect}, Error: #{cmd.format_for_exception}"
+    rescue Mixlib::ShellOut::CommandTimeout => e
+      raise ConversionTimeoutError
     end
 
     # @return [Hash]
