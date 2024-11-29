@@ -70,9 +70,9 @@ module Libreconv
     # @raise [ConversionTimeoutError] When soffice does not execute within the given timeframe.
     def execute_command(command, target_path)
       cmd = if RUBY_PLATFORM =~ /java/
-        Mixlib::ShellOut.new(*command, :timeout => @timeout_secs)
+        Mixlib::ShellOut.new(*command, timeout: @timeout_secs)
       else
-        Mixlib::ShellOut.new(*command, :environment => command_env, :timeout => @timeout_secs)
+        Mixlib::ShellOut.new(*command, environment: command_env, timeout: @timeout_secs)
       end
 
       cmd.run_command
