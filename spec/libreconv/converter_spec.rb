@@ -4,7 +4,7 @@ RSpec.describe Libreconv::Converter do
   describe '.new' do
     it 'raises error if soffice command does not exists' do
       expect do
-        described_class.new fixture_file, '/target', '/Whatever/soffice'
+        described_class.new fixture_file, '/target', 60, '/Whatever/soffice'
       end.to raise_error(IOError, /\bCan't find .*\bExecutable\b/i)
     end
 
@@ -18,7 +18,7 @@ RSpec.describe Libreconv::Converter do
   describe ':soffice_command' do
     it 'returns the user specified command path' do
       # Just faking that the command is present here
-      converter = described_class.new fixture_file, '/target', cmd = fixture_path('soffice')
+      converter = described_class.new fixture_file, '/target', 60, cmd = fixture_path('soffice')
       expect(converter.soffice_command).to eq cmd
     end
 
