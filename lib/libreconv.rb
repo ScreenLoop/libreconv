@@ -5,7 +5,7 @@ require 'uri'
 require 'net/http'
 require 'tmpdir'
 require 'securerandom'
-require 'open3'
+require 'mixlib/shellout'
 
 # Convert office documents using LibreOffice / OpenOffice to one of their supported formats.
 module Libreconv
@@ -21,7 +21,8 @@ module Libreconv
   # @raise [URI::Error]             When URI parsing error.
   # @raise [Net::ProtocolError]     If source URL checking failed.
   # @raise [ConversionFailedError]  When soffice command execution error.
-  def self.convert(source, target, timeout_secs, soffice_command = nil, convert_to = nil)
+  # @raise [ConversionTimeoutError] When soffice does not execute within the given timeframe.
+  def self.convert(source, target, timeout_secs = 60, soffice_command = nil, convert_to = nil)
     Converter.new(source, target, timeout_secs, soffice_command, convert_to).convert
   end
 
@@ -37,7 +38,7 @@ module Libreconv
     # @raise [IOError]                If invalid source file/URL or soffice command not found.
     # @raise [URI::Error]             When URI parsing error.
     # @raise [Net::ProtocolError]     If source URL checking failed.
-    def initialize(source, target, timeout_secs, soffice_command = nil, convert_to = nil)
+    def initialize(source, target, timeout_secs = 60, soffice_command = nil, convert_to = nil)
       @source = check_source_type(source)
       @target = target
       @timeout_secs = timeout_secs
@@ -48,6 +49,7 @@ module Libreconv
     end
 
     # @raise [ConversionFailedError]  When soffice command execution error.
+    # @raise [ConversionTimeoutError] When soffice does not execute within the given timeframe.
     def convert
       tmp_pipe_path = File.join(Dir.tmpdir, "soffice-pipe-#{SecureRandom.uuid}")
 
@@ -70,9 +72,9 @@ module Libreconv
     # @raise [ConversionTimeoutError] When soffice does not execute within the given timeframe.
     def execute_command(command, target_path)
       cmd = if RUBY_PLATFORM =~ /java/
-        Mixlib::ShellOut.new(*command, timeout: @timeout_secs)
+        ::Mixlib::ShellOut.new(*command, timeout: @timeout_secs)
       else
-        Mixlib::ShellOut.new(*command, environment: command_env, timeout: @timeout_secs)
+        ::Mixlib::ShellOut.new(*command, environment: command_env, timeout: @timeout_secs)
       end
 
       cmd.run_command
@@ -82,7 +84,7 @@ module Libreconv
 
       raise ConversionFailedError,
         "Conversion failed! Output: #{cmd.stdout.strip.inspect}, Error: #{cmd.format_for_exception}"
-    rescue Mixlib::ShellOut::CommandTimeout => e
+    rescue ::Mixlib::ShellOut::CommandTimeout => e
       raise ConversionTimeoutError
     end
 

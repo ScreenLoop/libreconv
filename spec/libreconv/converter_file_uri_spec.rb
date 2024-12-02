@@ -3,7 +3,7 @@
 
 RSpec.describe Libreconv::Converter do
   let :converter do
-    described_class.new fixture_file, '/target', fixture_path('soffice')
+    described_class.new fixture_file, '/target', 60, fixture_path('soffice')
   end
 
   describe '#build_file_uri' do

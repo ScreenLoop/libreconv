@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Libreconv::Converter do
-  let(:converter) { described_class.new fixture_file, '/', fixture_path('soffice') }
+  let(:converter) { described_class.new fixture_file, '/', 60, fixture_path('soffice') }
 
   describe '#check_valid_url' do
     it 'returns false for non-HTTP url' do
