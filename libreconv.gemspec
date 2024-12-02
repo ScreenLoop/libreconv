@@ -23,9 +23,9 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler', '>= 0'
-  spec.add_development_dependency 'mixlib-shellout'
+  spec.add_runtime_dependency 'mixlib-shellout', '~> 3.3', '>= 3.3.4'
   spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rspec', '~> 3.8'
+  spec.add_development_dependency 'rspec', '~> 3.13.0'
   spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'rubocop-rspec'
   spec.add_development_dependency 'webmock'
