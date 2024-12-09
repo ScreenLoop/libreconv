@@ -16,7 +16,7 @@ module Libreconv
   # @param [String] target          Target file path.
   # @param [Integer] timeout_secs   The maximum time this command is allowed to run.
   # @param [String] soffice_command Path to the soffice binary.
-  # @param [String] convert_to      Format to convert to (default: 'pdf').
+  # @param [String] convert_to      Format to convert to (default: 'pdf'). See https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html
   # @raise [IOError]                If invalid source file/URL or soffice command not found.
   # @raise [URI::Error]             When URI parsing error.
   # @raise [Net::ProtocolError]     If source URL checking failed.
@@ -34,7 +34,7 @@ module Libreconv
     # @param [String] target          Target file path.
     # @param [Integer] timeout_secs   The maximum time this command is allowed to run.
     # @param [String] soffice_command Path to the soffice binary.
-    # @param [String] convert_to      Format to convert to (default: 'pdf').
+    # @param [String] convert_to      Format to convert to (default: 'pdf'). See https://help.libreoffice.org/latest/en-US/text/shared/guide/convertfilters.html
     # @raise [IOError]                If invalid source file/URL or soffice command not found.
     # @raise [URI::Error]             When URI parsing error.
     # @raise [Net::ProtocolError]     If source URL checking failed.
@@ -43,7 +43,7 @@ module Libreconv
       @target = target
       @timeout_secs = timeout_secs
       @soffice_command = soffice_command || which('soffice') || which('soffice.bin')
-      @convert_to = convert_to || 'pdf'
+      @convert_to = convert_to || 'pdf:writer_pdf_Export'
 
       ensure_soffice_exists
     end
